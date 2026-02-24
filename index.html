@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>Tasks Tracker V1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f5fb;
+      color: #222;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app {
+      max-width: 480px;
+      width: 100%;
+      margin: 40px 16px;
+      padding: 24px 20px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: 24px;
+      text-align: center;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    #task-input {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #d0d4e4;
+      font-size: 14px;
+    }
+
+    #task-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
+    }
+
+    button {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      background: #6366f1;
+      color: white;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      background: #4f46e5;
+    }
+
+    #task-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #task-list li {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    #task-list li span {
+      flex: 1;
+      word-break: break-word;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .task-done {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    .btn-delete {
+      background: #e11d48;
+    }
+
+    .btn-delete:hover {
+      background: #be123c;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .filter-button {
+      background: transparent;
+      border: 1px solid #d0d4e4;
+      color: #475569;
+      padding: 4px 10px;
+    }
+
+    .filter-button:hover {
+      background: #e5edff;
+    }
+
+    .filter-button.active {
+      background: #6366f1;
+      border-color: #6366f1;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Список задач</h1>
+
+    <div class="controls">
+      <input id="task-input" type="text" placeholder="Новая задача" />
+      <button id="add-button">Добавить</button>
+    </div>
+
+    <div class="filters">
+      <button class="filter-button active" data-filter="all">Все</button>
+      <button class="filter-button" data-filter="active">Активные</button>
+      <button class="filter-button" data-filter="done">Выполненные</button>
+    </div>
+
+    <ul id="task-list"></ul>
+  </div>
+
+  <script>
+    const input = document.getElementById('task-input');
+    const addButton = document.getElementById('add-button');
+    const list = document.getElementById('task-list');
+    const filterButtons = Array.from(document.querySelectorAll('.filter-button'));
+
+    /** @type {{ id: number, text: string, done: boolean }[]} */
+    let tasks = [];
+    let nextId = 1;
+    let currentFilter = 'all';
+
+    function renderTasks() {
+      list.innerHTML = '';
+      const visibleTasks = tasks.filter(task => {
+        if (currentFilter === 'active') return !task.done;
+        if (currentFilter === 'done') return task.done;
+        return true;
+      });
+
+      visibleTasks.forEach(task => {
+        const li = document.createElement('li');
+
+        const textSpan = document.createElement('span');
+        textSpan.textContent = task.text;
+        if (task.done) {
+          textSpan.classList.add('task-done');
+        }
+
+        const doneButton = document.createElement('button');
+        doneButton.textContent = task.done ? 'Снять отметку' : 'Выполнено';
+        doneButton.addEventListener('click', () => {
+          task.done = !task.done;
+          renderTasks();
+        });
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Удалить';
+        deleteButton.classList.add('btn-delete');
+        deleteButton.dataset.mode = 'normal';
+        deleteButton.addEventListener('click', () => {
+          if (deleteButton.dataset.mode !== 'confirm') {
+            deleteButton.dataset.mode = 'confirm';
+            deleteButton.textContent = 'Точно удалить?';
+
+            setTimeout(() => {
+              if (deleteButton.dataset.mode === 'confirm') {
+                deleteButton.dataset.mode = 'normal';
+                deleteButton.textContent = 'Удалить';
+              }
+            }, 2500);
+
+            return;
+          }
+
+          tasks = tasks.filter(t => t.id !== task.id);
+          renderTasks();
+        });
+
+        const actions = document.createElement('div');
+        actions.className = 'task-actions';
+        actions.appendChild(doneButton);
+        actions.appendChild(deleteButton);
+
+        li.appendChild(textSpan);
+        li.appendChild(actions);
+
+        list.appendChild(li);
+      });
+    }
+
+    function addTask() {
+      const text = input.value.trim();
+      if (!text) return;
+      tasks.push({ id: nextId++, text, done: false });
+      input.value = '';
+      renderTasks();
+      input.focus();
+    }
+
+    addButton.addEventListener('click', addTask);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        addTask();
+      }
+    });
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const value = btn.getAttribute('data-filter');
+        if (!value) return;
+        currentFilter = value;
+
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        renderTasks();
+      });
+    });
+  </script>
+</body>
+</html>
+
