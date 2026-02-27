@@ -175,7 +175,7 @@
 
     <div class="controls">
       <input id="task-input" type="text" placeholder="Новая задача" />
-      <input id="deadline-input" type="date" />
+      <input id="deadline-input" type="text" placeholder="дд/мм/гггг" maxlength="10" />
       <button id="add-button">Добавить</button>
     </div>
 
@@ -227,6 +227,25 @@
       if (!deadline) return false;
       const deadlineDate = new Date(deadline + 'T23:59:59');
       return deadlineDate < new Date();
+    }
+
+    function formatDeadlineInput(value) {
+      const cleaned = value.replace(/\D/g, '');
+      if (cleaned.length <= 2) return cleaned;
+      if (cleaned.length <= 4) return cleaned.slice(0, 2) + '/' + cleaned.slice(2);
+      return cleaned.slice(0, 2) + '/' + cleaned.slice(2, 4) + '/' + cleaned.slice(4, 8);
+    }
+
+    function convertDdMmGgggToIso(ddMmGggg) {
+      const parts = ddMmGggg.split('/');
+      if (parts.length !== 3) return null;
+      const [dd, mm, gggg] = parts;
+      if (dd.length !== 2 || mm.length !== 2 || gggg.length !== 4) return null;
+      const day = parseInt(dd, 10);
+      const month = parseInt(mm, 10);
+      const year = parseInt(gggg, 10);
+      if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900 || year > 2100) return null;
+      return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
     }
 
     function renderTasks() {
@@ -306,7 +325,14 @@
     function addTask() {
       const text = input.value.trim();
       if (!text) return;
-      const deadline = deadlineInput.value || null;
+      let deadline = null;
+      if (deadlineInput.value.trim()) {
+        deadline = convertDdMmGgggToIso(deadlineInput.value.trim());
+        if (!deadline) {
+          alert('Неверный формат дедлайна. Используйте ДД/ММ/ГГГГ');
+          return;
+        }
+      }
       tasks.push({ id: nextId++, text, done: false, deadline });
       input.value = '';
       deadlineInput.value = '';
@@ -324,6 +350,9 @@
       if (e.key === 'Enter') {
         addTask();
       }
+    });
+    deadlineInput.addEventListener('input', (e) => {
+      e.target.value = formatDeadlineInput(e.target.value);
     });
 
     filterButtons.forEach(btn => {
