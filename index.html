@@ -5,65 +5,145 @@
   <title>Tasks Tracker V1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
       padding: 0;
-      background: #f4f5fb;
-      color: #222;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #1f2937;
       display: flex;
       justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding-top: 40px;
     }
 
     .app {
-      max-width: 480px;
+      max-width: 540px;
       width: 100%;
-      margin: 40px 16px;
-      padding: 24px 20px;
+      margin: 0 16px;
+      padding: 40px;
       background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
     }
 
     h1 {
-      margin: 0 0 16px;
-      font-size: 24px;
+      margin: 0 0 32px;
+      font-size: 32px;
+      font-weight: 800;
       text-align: center;
+      color: #111827;
+      letter-spacing: -1px;
     }
 
     .controls {
       display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    #task-input,
+    #deadline-input {
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 2px solid #e5e7eb;
+      font-size: 15px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #1f2937;
+      background: #ffffff;
     }
 
     #task-input {
       flex: 1;
-      padding: 8px 10px;
-      border-radius: 6px;
-      border: 1px solid #d0d4e4;
-      font-size: 14px;
     }
 
-    #task-input:focus {
+    #deadline-input {
+      flex: 0 0 150px;
+    }
+
+    #task-input::placeholder,
+    #deadline-input::placeholder {
+      color: #d1d5db;
+      font-weight: 500;
+    }
+
+    #task-input:focus,
+    #deadline-input:focus {
       outline: none;
-      border-color: #6366f1;
-      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
+      border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.12);
+      background: #f9fafb;
     }
 
     button {
-      padding: 8px 12px;
-      border-radius: 6px;
+      padding: 13px 24px;
+      border-radius: 12px;
       border: none;
       cursor: pointer;
       font-size: 14px;
-      background: #6366f1;
-      color: white;
+      font-weight: 700;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       white-space: nowrap;
+      text-transform: capitalize;
     }
 
-    button:hover {
-      background: #4f46e5;
+    #add-button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      align-self: flex-end;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    #add-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    #add-button:active {
+      transform: translateY(0);
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .filter-button {
+      background: #f3f4f6;
+      border: 2px solid #e5e7eb;
+      color: #6b7280;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .filter-button:hover {
+      border-color: #d1d5db;
+      background: #ffffff;
+      color: #374151;
+    }
+
+    .filter-button.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-color: transparent;
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
     #task-list {
@@ -72,100 +152,125 @@
       margin: 0;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
     }
 
     #task-list li {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 8px;
-      padding: 8px 10px;
-      border-radius: 8px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      gap: 14px;
+      padding: 16px 18px;
+      border-radius: 14px;
+      background: #f9fafb;
+      border: 2px solid #f3f4f6;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    #task-list li span {
-      flex: 1;
-      word-break: break-word;
-    }
-
-    .task-actions {
-      display: flex;
-      gap: 6px;
-    }
-
-    .task-done {
-      text-decoration: line-through;
-      opacity: 0.6;
-    }
-
-    .btn-delete {
-      background: #e11d48;
-    }
-
-    .btn-delete:hover {
-      background: #be123c;
-    }
-
-    .filters {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-      font-size: 13px;
-    }
-
-    .filter-button {
-      background: transparent;
-      border: 1px solid #d0d4e4;
-      color: #475569;
-      padding: 4px 10px;
-    }
-
-    .filter-button:hover {
-      background: #e5edff;
-    }
-
-    .filter-button.active {
-      background: #6366f1;
-      border-color: #6366f1;
-      color: #ffffff;
-    }
-
-    #deadline-input {
-      padding: 8px 10px;
-      border-radius: 6px;
-      border: 1px solid #d0d4e4;
-      font-size: 14px;
-    }
-
-    #deadline-input:focus {
-      outline: none;
-      border-color: #6366f1;
-      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
+    #task-list li:hover {
+      border-color: #e5e7eb;
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
     }
 
     .task-info {
       display: flex;
       flex-direction: column;
       flex: 1;
-      gap: 4px;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    #task-list li span {
+      flex: 1;
+      word-break: break-word;
+      font-size: 15px;
+      font-weight: 500;
+      color: #111827;
+      line-height: 1.4;
     }
 
     .task-deadline {
+      font-size: 13px;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .task-actions button {
+      padding: 8px 12px;
       font-size: 12px;
-      color: #64748b;
+      font-weight: 600;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .task-actions button:not(.btn-delete) {
+      background: #e0e7ff;
+      color: #4f46e5;
+    }
+
+    .task-actions button:not(.btn-delete):hover {
+      background: #c7d2fe;
+      transform: translateY(-1px);
+    }
+
+    .task-done {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    .btn-delete {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .btn-delete:hover {
+      background: #fca5a5;
+      transform: translateY(-1px);
     }
 
     .task-overdue {
-      background: #fee2e2 !important;
-      border-color: #fca5a5 !important;
+      background: #fef2f2 !important;
+      border-color: #fecaca !important;
+    }
+
+    .task-overdue:hover {
+      background: #ffffff !important;
     }
 
     .task-overdue .task-deadline {
       color: #dc2626;
-      font-weight: 500;
+      font-weight: 700;
+    }
+
+    @media (max-width: 480px) {
+      .app {
+        padding: 28px 20px;
+        border-radius: 16px;
+      }
+
+      h1 {
+        font-size: 28px;
+        margin-bottom: 24px;
+      }
+
+      #deadline-input {
+        flex: 0 0 130px;
+      }
+
+      #task-list li {
+        padding: 14px 16px;
+        gap: 12px;
+      }
     }
   </style>
 </head>
@@ -174,9 +279,11 @@
     <h1>Список задач</h1>
 
     <div class="controls">
-      <input id="task-input" type="text" placeholder="Новая задача" />
-      <input id="deadline-input" type="text" placeholder="дд/мм/гггг" maxlength="10" />
-      <button id="add-button">Добавить</button>
+      <input id="task-input" type="text" placeholder="Напиши новую задачу…" />
+      <div class="controls-row">
+        <input id="deadline-input" type="text" placeholder="дд/мм/гггг" maxlength="10" />
+        <button id="add-button">Добавить</button>
+      </div>
     </div>
 
     <div class="filters">
@@ -272,7 +379,8 @@
         if (task.deadline) {
           const deadlineSpan = document.createElement('div');
           deadlineSpan.className = 'task-deadline';
-          deadlineSpan.textContent = `${task.deadline} • ${getTimeUntilDeadline(task.deadline)}`;
+          const [y, m, d] = task.deadline.split('-');
+          deadlineSpan.textContent = `📅 ${d}/${m}/${y} • ${getTimeUntilDeadline(task.deadline)}`;
           taskInfo.appendChild(deadlineSpan);
         }
 
