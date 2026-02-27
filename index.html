@@ -320,6 +320,11 @@
         addTask();
       }
     });
+    deadlineInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        addTask();
+      }
+    });
 
     filterButtons.forEach(btn => {
       btn.addEventListener('click', () => {
