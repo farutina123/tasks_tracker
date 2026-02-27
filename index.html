@@ -132,6 +132,41 @@
       border-color: #6366f1;
       color: #ffffff;
     }
+
+    #deadline-input {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #d0d4e4;
+      font-size: 14px;
+    }
+
+    #deadline-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
+    }
+
+    .task-info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 4px;
+    }
+
+    .task-deadline {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .task-overdue {
+      background: #fee2e2 !important;
+      border-color: #fca5a5 !important;
+    }
+
+    .task-overdue .task-deadline {
+      color: #dc2626;
+      font-weight: 500;
+    }
   </style>
 </head>
 <body>
@@ -140,6 +175,7 @@
 
     <div class="controls">
       <input id="task-input" type="text" placeholder="Новая задача" />
+      <input id="deadline-input" type="date" />
       <button id="add-button">Добавить</button>
     </div>
 
@@ -154,14 +190,44 @@
 
   <script>
     const input = document.getElementById('task-input');
+    const deadlineInput = document.getElementById('deadline-input');
     const addButton = document.getElementById('add-button');
     const list = document.getElementById('task-list');
     const filterButtons = Array.from(document.querySelectorAll('.filter-button'));
 
-    /** @type {{ id: number, text: string, done: boolean }[]} */
+    /** @type {{ id: number, text: string, done: boolean, deadline: string | null }[]} */
     let tasks = [];
     let nextId = 1;
     let currentFilter = 'all';
+
+    function getTimeUntilDeadline(deadline) {
+      if (!deadline) return null;
+      const now = new Date();
+      const deadlineDate = new Date(deadline + 'T23:59:59');
+      const diffMs = deadlineDate - now;
+
+      if (diffMs < 0) {
+        const daysPassed = Math.floor(-diffMs / (1000 * 60 * 60 * 24));
+        return `просрочено на ${daysPassed} ${daysPassed === 1 ? 'день' : 'дней'}`;
+      }
+
+      const daysLeft = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const hoursLeft = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+      if (daysLeft > 0) {
+        return `осталось ${daysLeft} ${daysLeft === 1 ? 'день' : 'дней'}`;
+      }
+      if (hoursLeft > 0) {
+        return `осталось ${hoursLeft} ${hoursLeft === 1 ? 'час' : 'часов'}`;
+      }
+      return 'осталось менее часа';
+    }
+
+    function isOverdue(deadline) {
+      if (!deadline) return false;
+      const deadlineDate = new Date(deadline + 'T23:59:59');
+      return deadlineDate < new Date();
+    }
 
     function renderTasks() {
       list.innerHTML = '';
@@ -178,6 +244,17 @@
         textSpan.textContent = task.text;
         if (task.done) {
           textSpan.classList.add('task-done');
+        }
+
+        const taskInfo = document.createElement('div');
+        taskInfo.className = 'task-info';
+        taskInfo.appendChild(textSpan);
+
+        if (task.deadline) {
+          const deadlineSpan = document.createElement('div');
+          deadlineSpan.className = 'task-deadline';
+          deadlineSpan.textContent = `${task.deadline} • ${getTimeUntilDeadline(task.deadline)}`;
+          taskInfo.appendChild(deadlineSpan);
         }
 
         const doneButton = document.createElement('button');
@@ -215,8 +292,12 @@
         actions.appendChild(doneButton);
         actions.appendChild(deleteButton);
 
-        li.appendChild(textSpan);
+        li.appendChild(taskInfo);
         li.appendChild(actions);
+
+        if (isOverdue(task.deadline)) {
+          li.classList.add('task-overdue');
+        }
 
         list.appendChild(li);
       });
@@ -225,8 +306,10 @@
     function addTask() {
       const text = input.value.trim();
       if (!text) return;
-      tasks.push({ id: nextId++, text, done: false });
+      const deadline = deadlineInput.value || null;
+      tasks.push({ id: nextId++, text, done: false, deadline });
       input.value = '';
+      deadlineInput.value = '';
       renderTasks();
       input.focus();
     }
@@ -250,6 +333,10 @@
         renderTasks();
       });
     });
+
+    setInterval(() => {
+      renderTasks();
+    }, 60000);
   </script>
 </body>
 </html>
