@@ -175,7 +175,7 @@
 
     <div class="controls">
       <input id="task-input" type="text" placeholder="Новая задача" />
-      <input id="deadline-input" type="date" />
+      <input id="deadline-input" type="text" placeholder="ДД/ММ/ГГГГ" maxlength="10" />
       <button id="add-button">Добавить</button>
     </div>
 
@@ -253,7 +253,8 @@
         if (task.deadline) {
           const deadlineSpan = document.createElement('div');
           deadlineSpan.className = 'task-deadline';
-          deadlineSpan.textContent = `${task.deadline} • ${getTimeUntilDeadline(task.deadline)}`;
+          const [y, m, d] = task.deadline.split('-');
+          deadlineSpan.textContent = `${d}/${m}/${y} • ${getTimeUntilDeadline(task.deadline)}`;
           taskInfo.appendChild(deadlineSpan);
         }
 
@@ -303,10 +304,27 @@
       });
     }
 
+    function parseDeadline(raw) {
+      if (!raw) return null;
+      const match = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (!match) return undefined;
+      const [, dd, mm, yyyy] = match;
+      const date = new Date(`${yyyy}-${mm}-${dd}`);
+      if (isNaN(date) || date.getDate() !== +dd || date.getMonth() + 1 !== +mm) return undefined;
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
     function addTask() {
       const text = input.value.trim();
       if (!text) return;
-      const deadline = deadlineInput.value || null;
+
+      const deadline = parseDeadline(deadlineInput.value.trim());
+      if (deadline === undefined) {
+        deadlineInput.style.borderColor = '#e11d48';
+        return;
+      }
+      deadlineInput.style.borderColor = '';
+
       tasks.push({ id: nextId++, text, done: false, deadline });
       input.value = '';
       deadlineInput.value = '';
@@ -319,6 +337,13 @@
       if (e.key === 'Enter') {
         addTask();
       }
+    });
+    deadlineInput.addEventListener('input', () => {
+      let v = deadlineInput.value.replace(/[^\d]/g, '');
+      if (v.length > 8) v = v.slice(0, 8);
+      if (v.length > 4) v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+      else if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+      deadlineInput.value = v;
     });
     deadlineInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
